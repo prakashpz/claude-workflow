@@ -1,0 +1,52 @@
+# CLAUDE.md - Electron Desktop Application
+
+## Project Overview
+
+This is a cross-platform desktop application built with Electron, React, and TypeScript.
+
+## Architecture
+
+### Process Model
+- **Main Process** (`src/main/`): Node.js process managing windows, file system, native OS features
+- **Renderer Process** (`src/renderer/`): React application running in sandboxed Chromium
+- **Preload Script** (`src/main/preload.ts`): Secure bridge for IPC between processes
+- **Shared** (`src/shared/`): TypeScript types and utilities shared between processes
+
+### Security Model
+- `contextIsolation: true` - renderer cannot access Node.js
+- `nodeIntegration: false` - no direct Node.js API access
+- `sandbox: true` - renderer runs in sandbox
+- All IPC validated in main process
+- DevTools disabled in production
+
+## Development
+
+```bash
+npm install          # Install dependencies
+npm start            # Start dev server + Electron
+npm run build        # Compile for production
+npm run dist         # Build platform installer
+```
+
+## Key Patterns
+
+### IPC Communication
+- Request-response: `ipcRenderer.invoke()` / `ipcMain.handle()`
+- Events: `webContents.send()` / `ipcRenderer.on()`
+- Define channels in shared types
+
+### State Management
+- Zustand stores in `src/renderer/store/`
+- Electron-store for persistent settings
+- React Context for theme/global state
+
+### Component Convention
+- PascalCase `.tsx` + matching `.css` file
+- CSS custom properties for theming
+- Functional components with TypeScript props interface
+
+## Build and Distribution
+
+- **macOS**: Build on macOS only. Output: .dmg
+- **Windows**: Build on Windows only. Output: .exe (NSIS)
+- No cross-compilation supported

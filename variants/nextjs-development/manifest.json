@@ -1,0 +1,139 @@
+{
+  "$schema": "../../base/schema/manifest.schema.json",
+  "name": "nextjs-development",
+  "version": "1.1.0",
+  "description": "Full-stack Next.js development variant with React, TypeScript, and modern tooling support",
+  "projectType": "nextjs",
+  "baseVersion": "2.2.0",
+  "baseExclusions": {
+    "agents": ["code-writer"],
+    "commands": ["ImplementFeature", "FixBug", "RefactorCode"],
+    "tasks": ["feature-workflow", "bug-workflow"]
+  },
+  "components": {
+    "agents": [
+      {
+        "name": "nextjs-specialist",
+        "path": "agents/nextjs-specialist.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "react-component-writer",
+        "path": "agents/react-component-writer.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "api-route-designer",
+        "path": "agents/api-route-designer.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "commands": [
+      {
+        "name": "ImplementFeature",
+        "path": "commands/ImplementFeature.md",
+        "mergeStrategy": "overlay",
+        "replaces": "ImplementFeature"
+      },
+      {
+        "name": "FixBug",
+        "path": "commands/FixBug.md",
+        "mergeStrategy": "overlay",
+        "replaces": "FixBug"
+      },
+      {
+        "name": "RefactorCode",
+        "path": "commands/RefactorCode.md",
+        "mergeStrategy": "overlay",
+        "replaces": "RefactorCode"
+      },
+      {
+        "name": "CreateComponent",
+        "path": "commands/CreateComponent.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "CreateAPIRoute",
+        "path": "commands/CreateAPIRoute.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "tasks": [
+      {
+        "name": "feature-workflow",
+        "path": "tasks/feature-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "feature-workflow"
+      },
+      {
+        "name": "bug-workflow",
+        "path": "tasks/bug-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "bug-workflow"
+      },
+      {
+        "name": "nextjs-build",
+        "path": "tasks/nextjs-build.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "templates": [
+      {
+        "source": "templates/CLAUDE.md.nextjs",
+        "destination": "CLAUDE.md",
+        "mergeStrategy": "skip_if_exists"
+      }
+    ]
+  },
+  "configuration": {
+    "projectStructure": {
+      "components": "src/components",
+      "pages": "src/app",
+      "api": "src/app/api",
+      "lib": "src/lib",
+      "hooks": "src/hooks",
+      "types": "src/types",
+      "styles": "src/styles",
+      "public": "public"
+    },
+    "requiredDependencies": [
+      "next",
+      "react",
+      "react-dom",
+      "typescript"
+    ],
+    "environmentVariables": [
+      {
+        "name": "NEXT_PUBLIC_API_URL",
+        "description": "Public API URL for client-side requests",
+        "required": false
+      },
+      {
+        "name": "DATABASE_URL",
+        "description": "Database connection string",
+        "required": false
+      }
+    ]
+  },
+  "initialization": {
+    "postInit": [
+      "npm install",
+      "npm run dev"
+    ],
+    "prompts": [
+      {
+        "key": "useAppRouter",
+        "message": "Use App Router (Next.js 13+)?",
+        "type": "confirm",
+        "default": "true"
+      },
+      {
+        "key": "styling",
+        "message": "Styling solution",
+        "type": "select",
+        "options": ["Tailwind CSS", "CSS Modules", "Styled Components", "None"],
+        "default": "Tailwind CSS"
+      }
+    ]
+  }
+}

@@ -1,0 +1,232 @@
+# CLAUDE.md
+
+This file provides guidance for Claude Code when working in this ML/AI R&D project focused on model distillation, evaluation, and experiment management.
+
+## Project Overview
+
+<!-- PROJECT_DESCRIPTION -->
+ML R&D project for model distillation, fine-tuning, and evaluation. This project follows structured experiment lifecycles with reproducibility enforcement, benchmark-driven evaluation, and HuggingFace-based model publishing.
+
+## Repository Structure
+
+```
+.
+├── experiments/              # Per-experiment working directories
+│   └── {experiment-id}/
+│       ├── README.md
+│       ├── requirements.txt
+│       └── notes/
+├── models/                   # Model checkpoints
+│   └── {experiment-id}/
+│       ├── checkpoint-final/
+│       └── README.md         # Model card
+├── datasets/                 # Dataset configs and processing scripts
+│   ├── raw/
+│   └── processed/
+├── benchmarks/               # Evaluation framework
+│   ├── suites/               # Benchmark suite definitions
+│   ├── results/              # Per-run results
+│   │   └── {run-label}/
+│   └── comparisons/          # Cross-run comparison reports
+├── configs/                  # Training configurations (version-controlled)
+│   └── {experiment-id}.yaml
+├── scripts/                  # Shared training and evaluation scripts
+│   ├── training/
+│   ├── eval/
+│   └── utils/
+├── tests/                    # Tests for shared scripts
+├── docs/                     # Project documentation
+│   ├── experiments/          # Experiment reports
+│   └── architecture/         # Architecture decision records
+└── .env.example              # Required environment variables
+```
+
+## Development Guidelines
+
+### Python Conventions
+
+- Python 3.9+ with type hints on public function signatures
+- Docstrings for public APIs only (no docstrings on internal/private functions)
+- Use `pathlib.Path` over `os.path` for path manipulation
+- Use `dataclasses` or `pydantic` for configuration objects
+- Prefer explicit imports over wildcard imports
+
+### Training Script Patterns
+
+```python
+# Always load config from file, never hardcode
+import yaml
+from pathlib import Path
+
+def load_config(config_path: Path) -> dict:
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
+# Always set seeds for reproducibility
+def set_seed(seed: int = 42):
+    import random, numpy as np, torch
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+```
+
+### Configuration Pattern
+
+All training hyperparameters go in YAML config files under `configs/`, never hardcoded in scripts:
+
+```yaml
+experiment:
+  name: "experiment-name"
+  seed: 42
+
+model:
+  teacher: "model-id-or-path"
+  student: "model-id-or-path"
+
+training:
+  learning_rate: 2e-5
+  num_epochs: 3
+  batch_size: 4
+  gradient_accumulation_steps: 8
+  bf16: true
+
+data:
+  dataset: "dataset-name"
+  max_seq_length: 4096
+```
+
+### Code Style
+
+- Use `ruff` for linting and formatting
+- Line length: 100 characters
+- Sort imports with `isort` (profile: black)
+- No unused imports or variables
+
+## Git Workflow
+
+### Branch Naming
+
+- `experiment/{user}/{hypothesis}` - Experiment branches
+- `baseline/{model-name}` - Baseline measurement branches
+- `distillation/{student}-{teacher}` - Active distillation work
+- `chore/{description}` - Maintenance and tooling
+- `feat/{description}` - New pipeline features
+- `fix/{description}` - Bug fixes
+
+### Commit Messages
+
+Follow conventional commits with experiment metadata:
+
+```
+feat(exp): add KL distillation training loop for llama-70b-to-8b
+fix(eval): correct MMLU few-shot prompt template
+chore(deps): pin transformers to 4.38.0
+docs(exp-001): add results and interpretation
+```
+
+## HuggingFace Conventions
+
+### Model Naming
+
+Follow the tokenized naming standard:
+
+```
+{Organization}/{Student}-{Teacher}-{TrainingType}-{DatasetType}
+```
+
+- **Student**: Base model architecture (e.g., `llama3-8b`, `mistral-7b`, `phi3-mini`)
+- **Teacher**: Model providing training signal (e.g., `llama3-70b`, `gpt4`)
+- **TrainingType**: `sft`, `dpo`, `grpo`, `kd`, `quant`
+- **DatasetType**: `general`, `code`, `math`, `medical`, `legal`
+
+Examples:
+- `agdata-corp/llama3-8b-llama3-70b-sft-general`
+- `agdata-corp/mistral-7b-gpt4-dpo-code`
+
+### Branch Strategy
+
+- `experiment/{experiment-id}` for in-progress work
+- `main` only after release review
+- Default visibility: **private**
+
+## Experiment Tracker Integration
+
+### Weights & Biases
+
+If W&B is configured:
+- Every training run logs to W&B with experiment ID as run name
+- Group runs by experiment: `wandb.init(group=experiment_id)`
+- Log configs: `wandb.config.update(training_config)`
+- Tag runs with approach type: `wandb.run.tags = ["sft", "llama3"]`
+
+Environment variables:
+- `WANDB_PROJECT` - Project name
+- `WANDB_ENTITY` - Team or user entity
+- `WANDB_API_KEY` - API key (set in .env, never commit)
+
+## Available Commands
+
+- `/PlanExperiment <name>` - Plan a new experiment with hypothesis, success criteria, and benchmarks
+- `/RunBenchmarks <model-path>` - Execute benchmark suite and compare against baselines
+- `/PublishModel <model-path>` - Publish model to HuggingFace with proper naming and model card
+- `/DocumentExperiment <experiment-id>` - Generate experiment report or model card
+
+## Iteration Workflow
+
+The standard experiment iteration follows this cycle:
+
+1. **Plan** (`/PlanExperiment`) - Define hypothesis, success criteria, benchmark suite
+2. **Experiment** - Train model, track with W&B
+3. **Benchmark** (`/RunBenchmarks`) - Evaluate against success criteria
+4. **Document** (`/DocumentExperiment`) - Write experiment report
+5. **Publish** (`/PublishModel`) - If successful, publish to HuggingFace
+
+Each iteration builds on the previous one. Failed experiments inform the next hypothesis.
+
+## Environment Setup
+
+### Prerequisites
+
+- Python 3.9+
+- CUDA 11.8+ (for GPU training)
+- Git LFS (for model checkpoints)
+
+### Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+WANDB_PROJECT=my-project        # W&B project name
+WANDB_ENTITY=my-team            # W&B team
+HF_TOKEN=hf_xxx                 # HuggingFace token
+CUDA_VISIBLE_DEVICES=0,1        # GPU selection
+```
+
+## Key Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `experiments/` | Per-experiment working directories with notes and local requirements |
+| `models/` | Model checkpoints organized by experiment |
+| `datasets/` | Dataset configurations and processing pipelines |
+| `benchmarks/` | Evaluation suite definitions, results, and comparisons |
+| `configs/` | Version-controlled training configurations |
+| `scripts/` | Shared training, evaluation, and utility scripts |
+| `docs/experiments/` | Experiment reports and documentation |
+
+## Important Conventions
+
+- **Every experiment produces a written artifact** - Verbal-only findings are incomplete
+- **Documentation during iteration, not after** - Update docs as you work
+- **Benchmark claims require artifacts** - Reference specific result files and run labels
+- **Default to private** - Models are private until explicit release review
+- **Pin all dependencies** - No unpinned versions in requirements files
+- **Config over code** - Hyperparameters in YAML, not hardcoded in scripts
+- **Seeds everywhere** - Set random seeds in every training script

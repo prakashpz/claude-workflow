@@ -1,0 +1,181 @@
+{
+  "$schema": "../../base/schema/manifest.schema.json",
+  "name": "ml-distillation",
+  "version": "1.1.0",
+  "description": "ML/AI R&D variant for model distillation, evaluation, benchmarking, experiment reproducibility, and documentation workflows",
+  "projectType": "python",
+  "baseVersion": "2.2.0",
+  "baseExclusions": {
+    "agents": ["code-writer"],
+    "commands": ["ImplementFeature", "FixBug", "RefactorCode"],
+    "tasks": ["feature-workflow", "bug-workflow"]
+  },
+  "components": {
+    "agents": [
+      {
+        "name": "distillation-architect",
+        "path": "agents/distillation-architect.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "eval-benchmark-specialist",
+        "path": "agents/eval-benchmark-specialist.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "experiment-documentarian",
+        "path": "agents/experiment-documentarian.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "reproducibility-guardian",
+        "path": "agents/reproducibility-guardian.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "commands": [
+      {
+        "name": "ImplementFeature",
+        "path": "commands/ImplementFeature.md",
+        "mergeStrategy": "overlay",
+        "replaces": "ImplementFeature"
+      },
+      {
+        "name": "FixBug",
+        "path": "commands/FixBug.md",
+        "mergeStrategy": "overlay",
+        "replaces": "FixBug"
+      },
+      {
+        "name": "RefactorCode",
+        "path": "commands/RefactorCode.md",
+        "mergeStrategy": "overlay",
+        "replaces": "RefactorCode"
+      },
+      {
+        "name": "PlanExperiment",
+        "path": "commands/PlanExperiment.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "RunBenchmarks",
+        "path": "commands/RunBenchmarks.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "PublishModel",
+        "path": "commands/PublishModel.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "DocumentExperiment",
+        "path": "commands/DocumentExperiment.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "tasks": [
+      {
+        "name": "feature-workflow",
+        "path": "tasks/feature-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "feature-workflow"
+      },
+      {
+        "name": "bug-workflow",
+        "path": "tasks/bug-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "bug-workflow"
+      },
+      {
+        "name": "experiment-lifecycle",
+        "path": "tasks/experiment-lifecycle.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "benchmark-suite",
+        "path": "tasks/benchmark-suite.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "model-publishing",
+        "path": "tasks/model-publishing.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "experiment-reproducibility",
+        "path": "tasks/experiment-reproducibility.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "templates": [
+      {
+        "source": "templates/CLAUDE.md.ml-distillation",
+        "destination": "CLAUDE.md",
+        "mergeStrategy": "skip_if_exists"
+      }
+    ]
+  },
+  "configuration": {
+    "projectStructure": {
+      "experiments": "experiments",
+      "models": "models",
+      "datasets": "datasets",
+      "benchmarks": "benchmarks",
+      "configs": "configs",
+      "scripts": "scripts",
+      "docs": "docs"
+    },
+    "requiredDependencies": [
+      "torch",
+      "transformers",
+      "datasets",
+      "accelerate"
+    ],
+    "optionalDependencies": [
+      "wandb",
+      "lm-eval",
+      "vllm",
+      "bitsandbytes",
+      "peft",
+      "trl"
+    ],
+    "environmentVariables": [
+      {
+        "name": "WANDB_PROJECT",
+        "description": "Weights & Biases project name for experiment tracking",
+        "required": false
+      },
+      {
+        "name": "HF_TOKEN",
+        "description": "HuggingFace API token for model publishing and dataset access",
+        "required": false
+      },
+      {
+        "name": "CUDA_VISIBLE_DEVICES",
+        "description": "GPU device selection for training and inference",
+        "required": false
+      }
+    ]
+  },
+  "initialization": {
+    "postInit": [
+      "pip install -r requirements.txt"
+    ],
+    "prompts": [
+      {
+        "key": "trainingFramework",
+        "message": "Training framework",
+        "type": "select",
+        "options": ["HuggingFace Transformers", "Custom PyTorch"],
+        "default": "HuggingFace Transformers"
+      },
+      {
+        "key": "experimentTracker",
+        "message": "Experiment tracking tool",
+        "type": "select",
+        "options": ["Weights & Biases", "MLflow", "None"],
+        "default": "Weights & Biases"
+      }
+    ]
+  }
+}

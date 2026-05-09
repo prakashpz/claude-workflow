@@ -1,0 +1,96 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working with code in this repository.
+
+## Project Overview
+
+{{PROJECT_NAME}} - {{PROJECT_DESCRIPTION}}
+
+Built on the Agentuity platform with AI-powered agents, Hono API routes, and React SPA frontend.
+
+## Repository Structure
+
+```
+{{PROJECT_NAME}}/
+├── agents/                          # Agentuity workspace
+│   ├── app.ts                       # Entry point (createApp)
+│   ├── agentuity.json               # Platform config
+│   ├── agentuity.config.ts          # Workbench config
+│   ├── src/
+│   │   ├── agent/                   # Agent definitions
+│   │   │   └── {AgentName}/
+│   │   │       ├── index.ts         # createAgent() with handler
+│   │   │       └── eval.ts          # Agent evaluations
+│   │   ├── api/                     # Hono API routes (auto-discovered)
+│   │   │   ├── _shared/             # Shared data loaders
+│   │   │   └── {route}.ts           # createRouter() exports
+│   │   ├── web/                     # React SPA (Vite-built)
+│   │   │   ├── components/          # React components
+│   │   │   ├── routes/              # Page routes
+│   │   │   └── lib/                 # Client utilities
+│   │   ├── auth.ts                  # Authentication
+│   │   └── generated/               # Auto-generated (do not edit)
+│   └── data/                        # Data files
+├── docs/                            # Documentation
+│   ├── planning/                    # Session plans
+│   ├── specs/                       # Feature specifications
+│   └── reports/                     # Generated reports
+├── knowledge/                       # Knowledge base
+│   ├── prd/                         # Product requirements
+│   └── architecture/                # Architecture docs
+└── .claude/                         # Workflow system
+```
+
+## Development Guidelines
+
+### Architecture Layers (Separation of Concerns)
+
+1. **Agents** (`src/agent/`) - Core AI logic, Agentuity platform specific
+2. **API Routes** (`src/api/`) - HTTP interface, Hono-based, wires to agents
+3. **Frontend** (`src/web/`) - React SPA, replaceable independently
+
+### Agent Development
+
+- One agent per directory: `src/agent/{Name}/index.ts`
+- Use `createAgent()` from `@agentuity/runtime`
+- Define typed schemas with `@agentuity/schema` or Zod
+- Use `ctx.logger` instead of `console.log`
+- Storage hierarchy: request state < thread state < KV < vector < stream
+- AI Gateway: `createOpenAI({})` routes through Agentuity (no API key needed)
+
+### API Route Development
+
+- Routes in `src/api/` auto-discovered by Agentuity
+- Use `createRouter()` for Hono-based routing
+- Storage via `c.var.kv`, `c.var.vector`, `c.var.stream`
+- Shared loaders in `src/api/_shared/`
+
+### Frontend Development
+
+- React 19 + React Router v7 + Tailwind CSS
+- Use **relative imports only** (no `@/*` alias in Vite builds)
+- Radix UI / shadcn pattern for UI components
+
+### Testing
+
+- Agent evaluations in `eval.ts` alongside agents
+- Use Vitest for unit tests
+- Build verification: `bun run build` from agents/
+
+## Commands
+
+```bash
+bun install                # Install dependencies
+bun run dev                # Dev server (port 3500)
+bun run build              # Build for production
+bun run deploy             # Deploy to Agentuity cloud
+bun run typecheck          # TypeScript checking
+```
+
+## Agent Routing
+
+This project uses the **agentuity-development** variant. When performing coding tasks:
+- Use `agentuity-agent-architect` for agent creation, schemas, storage, AI Gateway
+- Use `agentuity-route-designer` for API routes, middleware, cron jobs
+- Use `react-spa-writer` for frontend components, pages, layouts
+- Base agents retained for: review, testing, documentation, planning, analysis

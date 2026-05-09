@@ -1,0 +1,148 @@
+{
+  "$schema": "../../base/schema/manifest.schema.json",
+  "name": "electron-desktop",
+  "version": "1.1.0",
+  "description": "Electron desktop application development with React renderer, TypeScript, and electron-builder packaging",
+  "projectType": "electron",
+  "baseVersion": "2.2.0",
+  "baseExclusions": {
+    "agents": ["code-writer"],
+    "commands": ["ImplementFeature", "FixBug", "RefactorCode"],
+    "tasks": ["feature-workflow", "bug-workflow"]
+  },
+  "components": {
+    "agents": [
+      {
+        "name": "electron-specialist",
+        "path": "agents/electron-specialist.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "ipc-architect",
+        "path": "agents/ipc-architect.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "commands": [
+      {
+        "name": "ImplementFeature",
+        "path": "commands/ImplementFeature.md",
+        "mergeStrategy": "overlay",
+        "replaces": "ImplementFeature"
+      },
+      {
+        "name": "FixBug",
+        "path": "commands/FixBug.md",
+        "mergeStrategy": "overlay",
+        "replaces": "FixBug"
+      },
+      {
+        "name": "RefactorCode",
+        "path": "commands/RefactorCode.md",
+        "mergeStrategy": "overlay",
+        "replaces": "RefactorCode"
+      },
+      {
+        "name": "CreateComponent",
+        "path": "commands/CreateComponent.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "BuildInstaller",
+        "path": "commands/BuildInstaller.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "RunElectronTests",
+        "path": "commands/RunElectronTests.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "tasks": [
+      {
+        "name": "feature-workflow",
+        "path": "tasks/feature-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "feature-workflow"
+      },
+      {
+        "name": "bug-workflow",
+        "path": "tasks/bug-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "bug-workflow"
+      },
+      {
+        "name": "electron-build",
+        "path": "tasks/electron-build.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "templates": [
+      {
+        "source": "templates/CLAUDE.md.electron-desktop",
+        "destination": "CLAUDE.md",
+        "mergeStrategy": "skip_if_exists"
+      }
+    ]
+  },
+  "configuration": {
+    "projectStructure": {
+      "main": "src/main",
+      "renderer": "src/renderer",
+      "shared": "src/shared",
+      "components": "src/renderer/components",
+      "store": "src/renderer/store",
+      "themes": "src/renderer/themes",
+      "styles": "src/renderer/styles",
+      "hooks": "src/renderer/hooks",
+      "contexts": "src/renderer/contexts",
+      "utils": "src/renderer/utils",
+      "types": "src/renderer/types",
+      "assets": "src/renderer/assets",
+      "builds": "builds",
+      "tests": "tests"
+    },
+    "requiredDependencies": [
+      "electron",
+      "react",
+      "react-dom",
+      "typescript"
+    ],
+    "optionalDependencies": [
+      "electron-builder",
+      "electron-store",
+      "webpack",
+      "zustand"
+    ],
+    "environmentVariables": []
+  },
+  "initialization": {
+    "postInit": [
+      "npm install",
+      "npm start"
+    ],
+    "prompts": [
+      {
+        "key": "bundler",
+        "message": "Module bundler for renderer?",
+        "type": "select",
+        "options": ["Webpack", "Vite", "esbuild"],
+        "default": "Webpack"
+      },
+      {
+        "key": "stateManagement",
+        "message": "State management library?",
+        "type": "select",
+        "options": ["Zustand", "Redux Toolkit", "Context API only", "None"],
+        "default": "Zustand"
+      },
+      {
+        "key": "packaging",
+        "message": "Packaging tool?",
+        "type": "select",
+        "options": ["electron-builder", "electron-forge"],
+        "default": "electron-builder"
+      }
+    ]
+  }
+}

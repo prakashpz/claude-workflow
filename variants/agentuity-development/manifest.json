@@ -1,0 +1,153 @@
+{
+  "$schema": "../../base/schema/manifest.schema.json",
+  "name": "agentuity-development",
+  "version": "1.0.0",
+  "description": "Agentuity platform development with AI agents, Hono API routes, and React SPA frontend",
+  "projectType": "agentuity",
+  "baseVersion": "2.2.0",
+  "baseExclusions": {
+    "agents": ["code-writer"],
+    "commands": ["ImplementFeature", "FixBug", "RefactorCode"],
+    "tasks": ["feature-workflow", "bug-workflow"]
+  },
+  "components": {
+    "agents": [
+      {
+        "name": "agentuity-agent-architect",
+        "path": "agents/agentuity-agent-architect.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "agentuity-route-designer",
+        "path": "agents/agentuity-route-designer.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "react-spa-writer",
+        "path": "agents/react-spa-writer.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "commands": [
+      {
+        "name": "ImplementFeature",
+        "path": "commands/ImplementFeature.md",
+        "mergeStrategy": "overlay",
+        "replaces": "ImplementFeature"
+      },
+      {
+        "name": "FixBug",
+        "path": "commands/FixBug.md",
+        "mergeStrategy": "overlay",
+        "replaces": "FixBug"
+      },
+      {
+        "name": "RefactorCode",
+        "path": "commands/RefactorCode.md",
+        "mergeStrategy": "overlay",
+        "replaces": "RefactorCode"
+      },
+      {
+        "name": "CreateAgent",
+        "path": "commands/CreateAgent.md",
+        "mergeStrategy": "overlay"
+      },
+      {
+        "name": "CreateRoute",
+        "path": "commands/CreateRoute.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "tasks": [
+      {
+        "name": "feature-workflow",
+        "path": "tasks/feature-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "feature-workflow"
+      },
+      {
+        "name": "bug-workflow",
+        "path": "tasks/bug-workflow.md",
+        "mergeStrategy": "overlay",
+        "replaces": "bug-workflow"
+      },
+      {
+        "name": "agentuity-build",
+        "path": "tasks/agentuity-build.md",
+        "mergeStrategy": "overlay"
+      }
+    ],
+    "templates": [
+      {
+        "source": "templates/CLAUDE.md.agentuity-development",
+        "destination": "CLAUDE.md",
+        "mergeStrategy": "skip_if_exists"
+      }
+    ]
+  },
+  "configuration": {
+    "projectStructure": {
+      "agents": "src/agent",
+      "api": "src/api",
+      "web": "src/web",
+      "webComponents": "src/web/components",
+      "webRoutes": "src/web/routes",
+      "webLib": "src/web/lib",
+      "generated": "src/generated",
+      "data": "data",
+      "shared": "src/api/_shared"
+    },
+    "requiredDependencies": [
+      "@agentuity/runtime",
+      "@agentuity/workbench",
+      "ai",
+      "@ai-sdk/openai",
+      "typescript"
+    ],
+    "optionalDependencies": [
+      "react",
+      "react-dom",
+      "react-router",
+      "hono",
+      "zod",
+      "@agentuity/schema",
+      "@agentuity/react",
+      "@agentuity/postgres",
+      "@agentuity/drizzle",
+      "@agentuity/auth"
+    ],
+    "environmentVariables": [
+      {
+        "name": "AGENTUITY_SDK_KEY",
+        "description": "Agentuity platform SDK key for services and AI Gateway",
+        "required": true
+      },
+      {
+        "name": "AGENTUITY_LOG_LEVEL",
+        "description": "Logging level: trace, debug, info, warn, error",
+        "required": false
+      }
+    ]
+  },
+  "initialization": {
+    "postInit": [
+      "bun install",
+      "bun run dev"
+    ],
+    "prompts": [
+      {
+        "key": "frontend",
+        "message": "Include React SPA frontend?",
+        "type": "confirm",
+        "default": "true"
+      },
+      {
+        "key": "aiProvider",
+        "message": "Primary AI provider via Gateway?",
+        "type": "select",
+        "options": ["OpenAI (gpt-4o)", "Anthropic (Claude)", "Google (Gemini)", "Multiple"],
+        "default": "OpenAI (gpt-4o)"
+      }
+    ]
+  }
+}
