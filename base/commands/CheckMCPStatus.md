@@ -17,8 +17,9 @@ Evaluates the actual MCP environment, compares it to expected servers, and repor
 ## Execution
 
 1. Invoke `mcp-sync` task with action: `verifyConnections`
-   - Tests task management MCP connection and auth
-   - Tests documentation MCP connection and auth
+   - Tests Linear MCP connection and auth (if configured)
+   - Tests Atlassian MCP connection and auth (covers both Jira and Confluence, if configured)
+   - Tests Coda MCP connection and auth (if configured)
    - Tests GitHub CLI availability
    - Collects capability schemas
 
@@ -36,12 +37,13 @@ Evaluates the actual MCP environment, compares it to expected servers, and repor
 
 ```
 ### MCP Status Summary
-- Task Management MCP: OK (connected, authenticated)
-- Documentation MCP: ERROR (authentication failed)
+- Linear MCP: OK (connected, authenticated)        [or: NOT CONFIGURED]
+- Atlassian MCP (Jira + Confluence): OK (connected, authenticated)  [or: ERROR ...]
+- Coda MCP: NOT CONFIGURED
 - GitHub CLI: OK (authenticated)
 
 ### Recommendations
-- Re-authenticate Documentation MCP: Check API token
+- Re-authenticate Atlassian MCP: Check API token in Claude Code settings
 ```
 
 ## Example
@@ -53,7 +55,8 @@ Evaluates the actual MCP environment, compares it to expected servers, and repor
 ## Related
 
 - `/StartSession` - Runs this check automatically
-- `/SyncLinear` - Manual task management sync
+- `/SyncLinear` - Manual Linear task management sync
+- `/SyncJira` - Manual Jira task management sync
 
 ## Tasks Invoked
 

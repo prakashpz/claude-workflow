@@ -14,29 +14,39 @@ Unified interface for all MCP (Model Context Protocol) interactions. Centralizes
 Check health and authentication status of all MCPs.
 
 **Steps:**
-1. Test task management MCP connection:
+1. Test Linear MCP connection (if `projectMetadata.linear` is configured):
    - Attempt list operation
    - Verify authentication
    - Check capability schema
-2. Test documentation MCP connection:
+2. Test Atlassian MCP connection (if `projectMetadata.jira` or `projectMetadata.confluence` is configured):
+   - Attempt `mcp__atlassian__atlassianUserInfo` to verify auth
+   - A single Atlassian MCP covers both Jira and Confluence
+3. Test Coda MCP connection (if `projectMetadata.coda` is configured):
    - Attempt list operation
    - Verify authentication
-3. Test GitHub CLI (not MCP but required):
+4. Test GitHub CLI (not MCP but required):
    - Run `gh auth status`
-4. Return status object
+5. Return status object
 
 **Outputs:**
 ```json
 {
-  "taskManagement": {
+  "linear": {
     "healthy": true,
     "lastChecked": "2026-01-16T10:00:00Z",
     "error": null
   },
-  "documentation": {
+  "atlassian": {
     "healthy": true,
     "lastChecked": "2026-01-16T10:00:00Z",
+    "coversJira": true,
+    "coversConfluence": true,
     "error": null
+  },
+  "coda": {
+    "healthy": false,
+    "lastChecked": "2026-01-16T10:00:00Z",
+    "error": "not configured"
   },
   "github": {
     "healthy": true,
@@ -220,6 +230,183 @@ Append content to a page.
 1. Append content via MCP
 2. Return confirmation
 
+### `syncJira`
+
+Synchronize with Jira for issue management via the Atlassian MCP.
+
+**Sub-operations:**
+
+#### `fetchIssues`
+Fetch issues from the configured Jira project.
+
+**Inputs:**
+- `projectKey`: Jira project key (optional, loaded from `project-metadata.getJiraContext`)
+- `assignee`: Filter by assignee (default: "currentUser()")
+- `status`: Filter by status (default: open/active)
+- `limit`: Max issues to return (default: 50)
+
+**Steps:**
+1. Load project context from `project-metadata.getJiraContext` if projectKey not provided
+2. Call `mcp__atlassian__searchJiraIssuesUsingJql` with JQL: `project = {projectKey} AND assignee = {assignee} AND status != Done ORDER BY priority ASC`
+3. Parse response into standardized format
+4. Return issue list
+
+**Outputs:**
+```json
+{
+  "issues": [
+    {
+      "id": "PROJ-123",
+      "title": "Issue title",
+      "status": "In Progress",
+      "priority": "High",
+      "assignee": "User",
+      "labels": ["feature"],
+      "url": "https://your-org.atlassian.net/browse/PROJ-123"
+    }
+  ],
+  "syncedAt": "2026-01-16T10:00:00Z"
+}
+```
+
+#### `updateIssue`
+Update a Jira issue status and/or add a comment.
+
+**Inputs:**
+- `id`: Issue key (e.g., PROJ-123)
+- `status`: New status to transition to (optional)
+- `comment`: Comment to add (optional)
+- `labels`: Labels to set (optional)
+
+**Steps:**
+1. If `status` provided: fetch available transitions via `mcp__atlassian__getTransitionsForJiraIssue`, then call `mcp__atlassian__transitionJiraIssue`
+2. If `comment` provided: call `mcp__atlassian__addCommentToJiraIssue`
+3. If `labels` provided: call `mcp__atlassian__editJiraIssue` with updated labels
+4. Return confirmation
+
+#### `createIssue`
+Create a new Jira issue.
+
+**Inputs:**
+- `title`: Issue summary
+- `description`: Issue description (ADF or plain text)
+- `projectKey`: Jira project key
+- `issueType`: Issue type (default: "Story")
+- `assignee`: Assignee account ID (optional)
+- `labels`: Labels (optional)
+- `priority`: Priority name (optional)
+- `parentId`: Parent issue key for sub-tasks (optional)
+
+**Steps:**
+1. Fetch issue type metadata via `mcp__atlassian__getJiraIssueTypeMetaWithFields`
+2. Create issue via `mcp__atlassian__createJiraIssue`
+3. Return created issue key and URL
+
+**Outputs:**
+```json
+{
+  "id": "PROJ-124",
+  "url": "https://your-org.atlassian.net/browse/PROJ-124"
+}
+```
+
+#### `searchIssues`
+Search Jira issues by text query using JQL.
+
+**Inputs:**
+- `query`: Search text
+- `projectKey`: Jira project key (optional, loaded from context)
+- `limit`: Max issues to return (default: 10)
+- `includeResolved`: Include resolved issues (default: false)
+
+**Steps:**
+1. Load project context if projectKey not provided
+2. Build JQL: `project = {projectKey} AND text ~ "{query}"` (append `AND resolution = Unresolved` unless `includeResolved`)
+3. Call `mcp__atlassian__searchJiraIssuesUsingJql`
+4. Return ranked issue list
+
+#### `transitionIssue`
+Transition a Jira issue to a new status.
+
+**Inputs:**
+- `id`: Issue key
+- `status`: Target status name (e.g., "In Progress", "Done", "In Review")
+
+**Steps:**
+1. Fetch available transitions via `mcp__atlassian__getTransitionsForJiraIssue`
+2. Match target status name to a transition ID
+3. Execute transition via `mcp__atlassian__transitionJiraIssue`
+4. Return confirmation
+
+### `syncConfluence`
+
+Synchronize with Confluence for documentation via the Atlassian MCP.
+
+**Sub-operations:**
+
+#### `fetchPage`
+Fetch content from a Confluence page.
+
+**Inputs:**
+- `pageId`: Confluence page ID (optional, loaded from `project-metadata.getConfluenceContext`)
+- `spaceKey`: Space key (optional)
+
+**Steps:**
+1. Load context from `project-metadata.getConfluenceContext` if pageId not provided
+2. Call `mcp__atlassian__getConfluencePage` with pageId
+3. Parse and return page content as markdown
+
+**Outputs:**
+```json
+{
+  "title": "Page Title",
+  "content": "Markdown content...",
+  "lastUpdated": "2026-01-15",
+  "url": "https://your-org.atlassian.net/wiki/spaces/SPACE/pages/12345",
+  "source": "confluence"
+}
+```
+
+#### `updatePage`
+Update a Confluence page with new content.
+
+**Inputs:**
+- `pageId`: Confluence page ID
+- `title`: Page title
+- `content`: New page content (markdown or storage format)
+- `version`: Current page version (required for updates)
+
+**Steps:**
+1. Fetch current page version via `mcp__atlassian__getConfluencePage` if version not provided
+2. Call `mcp__atlassian__updateConfluencePage` with incremented version
+3. Return confirmation and updated page URL
+
+#### `appendToPage`
+Append content to an existing Confluence page.
+
+**Inputs:**
+- `pageId`: Confluence page ID
+- `content`: Content to append (markdown)
+
+**Steps:**
+1. Fetch current page content and version via `mcp__atlassian__getConfluencePage`
+2. Append new content to existing body
+3. Call `mcp__atlassian__updateConfluencePage` with combined content
+4. Return confirmation
+
+#### `searchPages`
+Search Confluence pages using CQL.
+
+**Inputs:**
+- `query`: Search text
+- `spaceKey`: Space key to scope search (optional, loaded from context)
+- `limit`: Max results (default: 10)
+
+**Steps:**
+1. Load context if spaceKey not provided
+2. Call `mcp__atlassian__searchConfluenceUsingCql` with CQL: `space = "{spaceKey}" AND text ~ "{query}"`
+3. Return list of matching pages with titles and URLs
+
 ### `createInitiative`
 
 Create an Initiative in Linear from PRD data.
@@ -334,13 +521,16 @@ Fetch prioritized backlog for planning.
 ## Configuration
 
 The task works with any configured MCP servers for:
-- Task management (Linear, Jira, etc.)
-- Documentation (Coda, Notion, etc.)
+- Task management: Linear MCP (`syncLinear`) or Atlassian MCP (`syncJira`)
+- Documentation: Coda MCP (`syncCoda`) or Atlassian MCP (`syncConfluence`)
 
 **Project Scoping:** When `project-metadata` is configured, operations are automatically scoped:
-- Linear operations use the configured team and project
-- Coda operations use the configured document and page
-- Call `project-metadata.getLinearContext` or `project-metadata.getCodaContext` to get these values
+- Linear operations use the configured team and project (`project-metadata.getLinearContext`)
+- Jira operations use the configured project key and base URL (`project-metadata.getJiraContext`)
+- Coda operations use the configured document and page (`project-metadata.getCodaContext`)
+- Confluence operations use the configured space key and page ID (`project-metadata.getConfluenceContext`)
+
+**Atlassian MCP Note:** Jira and Confluence both use the same Atlassian MCP connection. A single authentication covers both services.
 
 ## Error Handling
 
@@ -357,13 +547,19 @@ Health status is stored in `session-state.json`:
 ```json
 {
   "mcpState": {
-    "taskManagementLastSync": "2026-01-16T10:05:00Z",
-    "documentationLastSync": "2026-01-16T10:05:00Z",
-    "taskManagementHealthy": true,
-    "documentationHealthy": true
+    "linearLastSync": "2026-01-16T10:05:00Z",
+    "linearHealthy": true,
+    "jiraLastSync": "2026-01-16T10:05:00Z",
+    "jiraHealthy": true,
+    "codaLastSync": "2026-01-16T10:05:00Z",
+    "codaHealthy": false,
+    "confluenceLastSync": "2026-01-16T10:05:00Z",
+    "confluenceHealthy": true
   }
 }
 ```
+
+Note: `jiraHealthy` and `confluenceHealthy` both reflect the Atlassian MCP connection status since they share the same MCP.
 
 ## Dependencies
 
@@ -375,6 +571,7 @@ Health status is stored in `session-state.json`:
 // Verify all connections
 invoke mcp-sync.verifyConnections
 
+// --- Linear ---
 // Fetch my open issues
 invoke mcp-sync.syncLinear.fetchIssues(assignee="me", state="open")
 
@@ -384,9 +581,33 @@ invoke mcp-sync.syncLinear.updateIssue(id="PROJ-123", state="Done", comment="Com
 // Search for issues by keyword
 invoke mcp-sync.syncLinear.searchIssues(query="dark mode", limit=10)
 
-// Search including completed issues
-invoke mcp-sync.syncLinear.searchIssues(query="auth", includeCompleted=true)
+// --- Jira ---
+// Fetch my open Jira issues
+invoke mcp-sync.syncJira.fetchIssues(assignee="currentUser()")
 
-// Fetch PRD from documentation
+// Update Jira issue status
+invoke mcp-sync.syncJira.updateIssue(id="PROJ-123", status="In Review", comment="Ready for review")
+
+// Create a Jira issue
+invoke mcp-sync.syncJira.createIssue(title="Fix timeout bug", projectKey="PROJ", issueType="Bug")
+
+// Search Jira issues
+invoke mcp-sync.syncJira.searchIssues(query="dark mode", limit=10)
+
+// Transition a Jira issue
+invoke mcp-sync.syncJira.transitionIssue(id="PROJ-123", status="Done")
+
+// --- Coda ---
+// Fetch PRD from Coda
 invoke mcp-sync.syncCoda.fetchPRD(docId="doc123", pageId="PRD Page")
+
+// --- Confluence ---
+// Fetch requirements page from Confluence
+invoke mcp-sync.syncConfluence.fetchPage(pageId="12345678")
+
+// Append session notes to a Confluence page
+invoke mcp-sync.syncConfluence.appendToPage(pageId="12345678", content="## Session Notes\n...")
+
+// Search Confluence pages
+invoke mcp-sync.syncConfluence.searchPages(query="authentication design", spaceKey="ENG")
 ```
